@@ -1,0 +1,647 @@
+
+var NowPlayingDefaults = {};
+
+// Version
+NowPlayingDefaults.Version = "0.1";
+NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
+NowPlayingDefaults.RemoteAppBase = "http://192.168.2.40";
+
+NowPlayingDefaults.ShowDebug = true;
+// Beta function:
+NowPlayingDefaults.EnableBetaFeatures = false;
+
+// Proxy
+NowPlayingDefaults.Proxy = {
+	"enabled" : false,
+	"host" : "example.com",
+	"port" : "8080",
+	"user" : "johndoe",
+	"password" : "pouet"
+};
+//dependencies
+Importer.loadQtBinding( "qt.core" );
+Importer.loadQtBinding( "qt.gui" );
+Importer.loadQtBinding( "qt.network" );
+Importer.loadQtBinding( "qt.uitools" ); 
+
+Importer.include("moment.js")
+Importer.include("lame_info.js")
+
+
+/* POST network requests handling class
+ */
+var DataPOSTer = {
+	/* Posts data to url
+	 * @param data (object) associative object of {key1: "value1", key2: "value2"...}
+	 * @param HTTPParams (object) associative object of {key1: "value1", key2: "value2"...}
+	 * @return (QHttp*) modified QHttp object
+	 */
+	simple: function(url, data, HTTPParams) {
+		// Do normal POST
+		var postRequest = new QHttpRequestHeader();
+		if ( HTTPParams ) {		
+			for ( var i in HTTPParams ) {
+				postRequest.setValue(i, HTTPParams[i]);
+				debugMessage("param: "+ HTTPParams[i], "DataPOSTer");
+			}
+		}
+		
+		postRequest.setRequest("POST", url.encodedPath().toString(), 1, 1);
+		postRequest.setValue("Host", url.encodedHost().toString());
+		postRequest.setContentType("application/x-www-form-urlencoded");
+		
+		var postDataByteArray = new QByteArray();
+		var first = true;
+		for ( var i in data ) {
+			if ( !first ) {
+				postDataByteArray.append("&");
+			} else {
+				first = false;
+			}
+			postDataByteArray.append(i+"="+QUrl.toPercentEncoding(data[i]));
+		}
+		
+		postRequest.setContentLength(postDataByteArray.length());
+		
+		return DataPOSTer.getCustomQHttp(url, postDataByteArray, postRequest);
+	},	
+	getCustomQHttp: function(url, byteArrayData, requestHeader) {
+		var http = new QHttp();
+		debugMessage("host: "+url.encodedHost(), "DataPOSTer");
+		if (NowPlaying.Proxy.enabled) {
+			var proxy = new QNetworkProxy();
+			proxy.setType(QNetworkProxy.HttpProxy);
+			proxy.setHostName(NowPlaying.Proxy.host);
+			proxy.setPort(NowPlaying.Proxy.port);
+			proxy.setUser(NowPlaying.Proxy.user);
+			proxy.setPassword(NowPlaying.Proxy.password);
+			http.setProxy(proxy);
+		}
+		http.setHost(url.encodedHost());
+		http.requestHeader = requestHeader;	
+		http.data = byteArrayData;			
+		return http;
+	}
+};
+
+/* Sends track data to remote server.
+ */
+function sendData( data, cookieHeader ) { try {
+	
+	var url = new QUrl(NowPlaying.RemoteAppBase + "/api/nowplaying/format/json");
+		
+	var HTTPParams = {"User-Agent": "NowPlaying script"}; // TODO define what to put here
+	HTTPParams['Cookie'] = cookieHeader;
+	
+	var http = DataPOSTer.simple(url, data, HTTPParams);	
+	
+	http.param = data.param;
+	http.errorFlag = false;
+	http.done.connect( http, "nowPlayingProcessReply" );
+	http.go();
+} catch (err) { debugException(err); } }
+
+/* authenticates user in server.
+ */
+function authenticateToPredatum() { try {
+	var url = new QUrl(NowPlaying.RemoteAppBase + '/api/login/format/json');	
+	
+	var HTTPParams = {"User-Agent": "NowPlaying script" }; // TODO define what to put here
+	
+	
+	var data = {};
+	data.login = NowPlaying.UserName;
+	data.password = NowPlaying.UserPassword;
+	data.remember = '1';
+	data.submit = 'Let me in';
+	
+	//debugMessage("authenticating with user / pass: " + NowPlaying.UserName + " / " + NowPlaying.UserPassword , "DataPOSTer");		
+	var http = DataPOSTer.simple(url, data, HTTPParams);	
+	
+	//http.param = data.param;
+	http.errorFlag = false;
+	http.done.connect( http, "processLoginReply" );
+	http.go();
+} catch (err) { debugException(err); } }
+
+/* Process authentication and send track data.
+ */
+QHttp.prototype.processLoginReply = function () { try {
+		
+	var replyData = parseJSON(this.readAll().toString());	
+	if(!replyData.error)
+		var cookieHeader = this.lastResponse().toString().match(/ci_session=.*path=\//)[0];
+	else {
+		Amarok.alert("Login failed: " + replyData.error[1]);
+		return false;
+	}
+	
+	Amarok.Script.writeConfig("cookie", cookieHeader);
+	debugMessage("Writing cookie","QHttp.prototype.processLoginReply");
+	
+	sendData(fetchTrackData(), cookieHeader);
+	
+} catch (err) { debugException(err, "function QHttp.prototype.processLoginReply"); } };
+
+/* Gets status codes and such from a network request
+ */
+QHttp.prototype.nowPlayingProcessReply = function (error) { try {
+	
+	if ( !error ) {
+		
+		var replyData = parseJSON(this.readAll().toString());	
+		if(replyData.error) {
+			if(replyData.error[0] == "login_error") //cookie not valid anymore?
+				authenticateToPredatum();
+			else
+				showMessage(qsTr("NowPlaying - Error while posting to server:" + replyData.error[1]));		
+		}
+		else {
+			if(replyData.user_track) {
+				Amarok.alert("user_track: " + replyData.user_track);
+			}
+			//to be completed with other possible responses
+			else
+				Amarok.alert(this.readAll().toString())
+		}
+				
+		
+		debugMessage(this.readAll().toString(), "HTTP");
+		
+		// if ( this.param == "update" )
+			// timer.start(1000 * 60 * 10); // 10 minutes
+			
+		
+	}
+
+} catch (err) { debugException(err, "function QHttp.prototype.nowPlayingProcessReply"); } };
+
+QHttp.prototype.go = function() { try {
+	if ( this.requestHeader && this.data ) {
+		debugMessage(this.requestHeader.toString(), "QHttp.go()");
+		this.request(this.requestHeader, this.data);
+	}
+} catch (err) { debugException(err, "function QHttp.prototype.go"); } };
+
+/* Checks if a new version of this script is available
+ */
+function checkUpdate() { try {
+	if ( Amarok.Script.readConfig("useNowPlaying", "true") == "true" ) {
+		var data = {};
+		data.param = "update";
+		data.player = "Amarok";
+		data.player_version = Amarok.Info.version();
+		data.script = NowPlaying.Id;
+		data.script_version = NowPlaying.Version;
+		sendData(data, null);
+	}
+} catch (err) { debugException(err, "function checkUpdate"); } }
+
+/* Gets from Amarok and playing file all needed information, and puts
+ * everything in an object.
+ */
+function fetchTrackData() { try {
+	if (Amarok.Engine.engineState() == 2) {
+		// Amarok is on "stop"
+		return false;
+	}
+	var data = {};
+	var f = new QFileInfo(Amarok.Engine.currentTrack().path);
+	
+	data.file_name = f.fileName();
+	data.file_size = f.size();
+	data.folder_name = f.canonicalPath()
+	var d = moment(f.created().toString());
+	data.file_date = d.format('YYYY-MM-DD H:mm:ss');
+	data.file_type = f.suffix().toUpperCase();
+	data.track = Amarok.Engine.currentTrack().trackNumber;
+	data.title = Amarok.Engine.currentTrack().title;
+	data.artist = Amarok.Engine.currentTrack().artist;
+	data.album = Amarok.Engine.currentTrack().album;
+	data.score = Amarok.Engine.currentTrack().score;
+	data.rating = Amarok.Engine.currentTrack().rating;
+	data.counter = Amarok.Engine.currentTrack().playCount;
+	data.genre = Amarok.Engine.currentTrack().genre;
+	data.track_duration = Amarok.Engine.currentTrack().length;
+	data.year = Amarok.Engine.currentTrack().year;
+	data.bitrate  = Amarok.Engine.currentTrack().bitrate;
+	data.comment = Amarok.Engine.currentTrack().comment;
+	var now = moment(Date());
+	data.start_time =  now.format('YYYY-MM-DD H:mm:ss');
+	if(getPreset() != null) {
+		data.lame_encoded = 1;
+		data.quality = getPreset();
+	} else {
+		data.lame_encoded = 0;
+		data.quality = null;
+	}
+	if(data.filetype == 'FLAC') {
+		data.quality = 'lossless';
+	}	
+	return data;
+} catch (err) { debugException(err, "function fetchTrackData"); } }	
+
+
+/* returns a json object from a string */
+function parseJSON(str) { try {
+	return JSON.parse(str, function (key, value) {
+		var type;
+		if (value && typeof value === 'object') {
+			type = value.type;
+			if (typeof type === 'string' && typeof window[type] === 'function') {
+				return new (window[type])(value);
+			}
+		}
+		return value;
+	});	
+} catch (err) { debugException(err, "function parseJSON"); } }	
+
+
+/* Called on 'special' post event #### TODO: averiguar qué hace ####
+ */
+function commentPostEventHandler() { try {
+	commentPostDataCache = fetchTrackData();
+	if (commentPostDataCache !== false) {
+		commentPostDataCache.param = "special";
+		
+		// Add info to SongInfo label
+		commentPostDialog.frame_SongInfo.label_SongInfo.setText(
+			"<strong>%TITLE%</strong> by <strong>%ARTIST%</strong> on <em>%ALBUM%</em>"
+			.replace(/%TITLE%/g, commentPostDataCache.title)
+			.replace(/%ARTIST%/g, commentPostDataCache.artist)
+			.replace(/%ALBUM%/g, commentPostDataCache.album)
+		);
+	}
+	else {
+		commentPostDialog.frame_SongInfo.label_SongInfo.setText(
+			qsTr("No song to comment on!"));
+	}
+	
+	commentPostDialog.lineEdit_Message.setEnabled(commentPostDataCache !== false);
+	commentPostDialog.textEdit_Comment.setEnabled(commentPostDataCache !== false);
+	commentPostDialog.label_Message.setEnabled(commentPostDataCache !== false);
+	commentPostDialog.label_Comment.setEnabled(commentPostDataCache !== false);
+	
+	// Reset fields in commentPostDialog
+	commentPostDialog.lineEdit_Message.setText("");
+	commentPostDialog.textEdit_Comment.setText("");
+	
+	// TODO reset previews
+	
+	commentPostDialog.show();
+} catch (err) { debugException(err, "function commentPostEventHandler"); } }
+
+/* Called when commentPostDialog is accepted
+ */
+function processCommentPost() { try {
+	if (commentPostDataCache !== false) {
+		commentPostDataCache.special_message = commentPostDialog.lineEdit_Message.text;
+		commentPostDataCache.special_comment = commentPostDialog.textEdit_Comment.plainText;
+		// TODO fetch data from dialog about wich handlers to use
+		
+		sendData(commentPostDataCache, null);
+	}
+} catch (err) { debugException(err, "function processCommentPost"); } }
+
+
+/* Puts configuration in the NowPlaying object.
+ */
+function readConfig() { try {
+	with (Amarok.Script) {
+		NowPlaying.UseNowPlaying = ( readConfig("useNowPlaying", "true") == "true" );
+		
+		NowPlaying.UserName = readConfig("userName", "") + "";
+		NowPlaying.UserPassword = readConfig("userPassword", "") + "";
+		
+		NowPlaying.RemoteAppBase = readConfig("remoteAppBase", NowPlayingDefaults.RemoteAppBase + "") + "";
+		NowPlaying.ShowDebug = ( readConfig("showDebug", NowPlayingDefaults.ShowDebug + "") == "true" );
+		NowPlaying.EnableBetaFeatures = ( readConfig("enableBetaFeatures", NowPlayingDefaults.EnableBetaFeatures + "") == "true" );
+		
+		NowPlaying.Proxy = {};
+		NowPlaying.Proxy.enabled =
+			(readConfig("proxyEnabled", "" + NowPlayingDefaults.Proxy.enabled) == "true");
+		NowPlaying.Proxy.host =
+			"" + readConfig("proxyHost", "" + NowPlayingDefaults.Proxy.host);
+		NowPlaying.Proxy.port =
+			readConfig("proxyPort", "" + NowPlayingDefaults.Proxy.port) - 0;
+		NowPlaying.Proxy.user =
+			"" + readConfig("proxyUser", "" + NowPlayingDefaults.Proxy.user);
+		NowPlaying.Proxy.password =
+			"" + readConfig("proxyPassword", "" + NowPlayingDefaults.Proxy.password);
+	}
+		
+} catch (err) { debugException(err, "function configureEventHandler"); } }
+
+/* Called on configure event
+ */
+function configureEventHandler() { try {
+	with (configureDialog.tabWidget.children()[0]) {
+		// General
+		tab_General.checkBox_UseNowPlaying.setChecked(NowPlaying.UseNowPlaying);
+		
+		// Login
+		tab_Login.lineEdit_Pseudo.setText(NowPlaying.UserName);
+		tab_Login.lineEdit_Password.setText(NowPlaying.UserPassword);
+		
+		// Advanced
+		tab_Advanced.lineEdit_RemoteAppBase.setText(NowPlaying.RemoteAppBase);
+		tab_Advanced.checkBox_ShowDebug.setChecked(NowPlaying.ShowDebug);
+		tab_Advanced.checkBox_EnableBetaFeatures.setChecked(NowPlaying.EnableBetaFeatures);
+		
+		// Proxy
+		tab_Proxy.checkBox_ProxyEnabled.setChecked(NowPlaying.Proxy.enabled);
+		tab_Proxy.lineEdit_ProxyHost.setText(NowPlaying.Proxy.host);
+		tab_Proxy.spinBox_ProxyPort.setValue(NowPlaying.Proxy.port);
+		tab_Proxy.lineEdit_ProxyUser.setText(NowPlaying.Proxy.user);
+		tab_Proxy.lineEdit_ProxyPassword.setText(NowPlaying.Proxy.password);
+	}
+	
+	configureDialog.show(); 
+} catch (err) { debugException(err, "function configureEventHandler"); } }
+
+/* Called when configure dialog is accepted
+ */
+function saveConfiguration() { try {
+	with (configureDialog.tabWidget.children()[0]) {
+		Amarok.Script.writeConfig("useNowPlaying",
+			tab_General.checkBox_UseNowPlaying.checked + "");
+		
+		Amarok.Script.writeConfig("userName",
+			tab_Login.lineEdit_Pseudo.text + "");
+		if ( tab_Login.lineEdit_Password.modified ) {
+			var userPassword = tab_Login.lineEdit_Password.text;
+			Amarok.Script.writeConfig("userPassword",
+			tab_Login.lineEdit_Password.text + "");
+		}
+		
+		Amarok.Script.writeConfig("remoteAppBase",
+			tab_Advanced.lineEdit_RemoteAppBase.text + "");
+		Amarok.Script.writeConfig("showDebug",
+			tab_Advanced.checkBox_ShowDebug.checked + "");
+		Amarok.Script.writeConfig("enableBetaFeatures",
+			tab_Advanced.checkBox_EnableBetaFeatures.checked + "");
+		
+		Amarok.Script.writeConfig("proxyEnabled",
+			tab_Proxy.checkBox_ProxyEnabled.checked + "");
+		Amarok.Script.writeConfig("proxyHost",
+			tab_Proxy.lineEdit_ProxyHost.text + "");
+		Amarok.Script.writeConfig("proxyPort",
+			tab_Proxy.spinBox_ProxyPort.value + "");
+		Amarok.Script.writeConfig("proxyUser",
+			tab_Proxy.lineEdit_ProxyUser.text + "");
+		Amarok.Script.writeConfig("proxyPassword",
+			tab_Proxy.lineEdit_ProxyPassword.text + "");
+	}
+	
+	readConfig();
+	initDebug();
+	initBeta();
+	// sendData({param: "test"});
+} catch (err) { debugException(err, "function saveConfiguration"); } }
+
+/* Fill the proxy config tab with data from http_proxy env variable
+ */
+function proxyGuessFromEnvEvent() { try {
+	var env = QProcess.systemEnvironment();
+	var l = env.length;
+	var url = "";
+	for (var i = 0; i < l; ++i) {
+		if (matches = env[i].match(/^http_proxy\s?=\s?(.+)/i)) {
+			url = matches[1];
+		}
+	}
+	if (url != "") {
+		qUrl = new QUrl(url);
+		with (configureDialog.tabWidget.children()[0]) {
+			tab_Proxy.checkBox_ProxyEnabled.setChecked(true);
+			tab_Proxy.lineEdit_ProxyHost.setText(qUrl.host());
+			tab_Proxy.spinBox_ProxyPort.setValue(qUrl.port());
+			tab_Proxy.lineEdit_ProxyUser.setText(qUrl.userName());
+			tab_Proxy.lineEdit_ProxyPassword.setText(qUrl.password());
+		}
+	}
+	
+} catch (err) { debugException(err, "function proxyGuessFromEnvEvent"); } }
+
+
+function configDiagRestoreDefaults() { try {
+	configureDialog.tabWidget.children()[0].tab_Advanced.lineEdit_RemoteAppBase.setText(NowPlayingDefaults.RemoteAppBase);
+} catch (err) { debugException(err, "function configDiagRestoreDefaults"); } }
+
+
+/* Called on track event (play/pause/stop)
+ */
+function trackEventHandler() { try {
+	if (NowPlaying.UseNowPlaying) {
+		// Make an id for this request (workaround)
+		var eventId;
+		try {
+			eventId = "pouet" + Amarok.Engine.engineState() + Amarok.Engine.currentTrack().title + Amarok.Engine.currentTrack().artist + Amarok.Engine.currentTrack().album;
+		}
+		catch(e) {
+			eventId = "pouet" + Amarok.Engine.engineState();
+		}
+		
+		if ( eventId == lastProcessedEventId ) {
+			return;
+		}
+		lastProcessedEventId = eventId;
+		
+		// Determine wich param to use: none or post
+		var postData = {};
+		var state = Amarok.Engine.engineState(); // 0: playing, 1: pause, 2: stop
+		switch ( state ) {
+			case 0:
+				// Add track informations
+				postData = fetchTrackData();
+				postData.param = "post";
+				break;
+			case 1:
+			case 2:
+				postData.param = "none";
+				break;
+		}
+		
+		if(Amarok.Script.readConfig("cookie", "") != "") 
+			sendData(postData, Amarok.Script.readConfig("cookie", "") + "");
+		else
+			authenticateToPredatum();
+	}
+} catch (err) { debugException(err, "function trackEventHandler"); } }
+
+/* Refresh preview of the special post
+ */
+function commentPostRefreshPreview() { try {
+	// TODO
+} catch (err) { debugException(err, "function commentPostRefreshPreview"); } }
+
+
+/* Shows message as Amarok.Alert()
+ */
+function showMessage(message, icon, format) { try {
+	if ( icon == "" || icon == undefined ) {
+		icon = "Information";
+	}
+	var diag = new QMessageBox(QMessageBox[icon], "NowPlaying - Amarok", message);
+	if ( format ) {
+		diag.textFormat = Qt[format];
+	}
+	diag.setParent(this);
+	diag.show();
+} catch (err) { debugException(err, "function showMessage"); } }
+
+/* Debug function which works with exceptions.
+ */
+function debugException(e, context) {
+	var data = "NowPlaying - Error:\n\nMessage: "+e+"\n"+"Context: "+context+"\n\n"+
+		"An exception was found. You should upgrade your script, or, "+
+		"if you have the latest version, submit a bug report. Thanks!";
+// 		for ( var i in e ) {
+// 			data += i+": "+e[i]+"\n";
+// 		}
+	Amarok.alert(data);
+}
+
+/* Debug function
+ */
+function debugMessage(message, type) {
+	if ( NowPlaying.ShowDebug ) {
+		debug_text_box.append(
+		"\n\n-----------------------------------------------------------\n"+
+		type+" debug:"+"\n"+message
+		);
+	}
+}
+
+/* Debug function
+ */
+function debugObject(object, type) {
+	if ( NowPlaying.ShowDebug ) {
+		var data = "Object of type: "+typeof(object)+"\n";
+		for ( var i in object ) {
+			data += i+": "+object[i]+"\n";
+		}
+		debugMessage(data, type);
+	}
+}
+
+function initDebug() { try {
+	if ( NowPlaying.ShowDebug ) {
+		if ( debug_text_box === 0 ) {
+			debug_text_box = new QTextEdit();
+			debug_text_box.setWindowTitle("NowPlaying debug");
+			debug_text_box.readOnly = true;
+			debug_text_box.setPlainText("NowPlaying debug");
+			debug_text_box.resize(500, 400);
+			debug_text_box.show();
+		}
+		else
+			debug_text_box.show();
+	}
+	else if ( debug_text_box !== 0 ) {
+		debug_text_box.hide();
+	}
+} catch (err) { debugException(err, "function initDebug"); } }
+
+function initBeta() { try {
+	if ( NowPlaying.EnableBetaFeatures ) {
+		
+	}
+} catch (err) { debugException(err, "function initBeta"); } }
+
+/* Workarounds
+ */
+QByteArray.prototype.toString = function() {
+	ts = new QTextStream( this, QIODevice.ReadOnly );
+	return ts.readAll();
+};
+
+function clone(o) {
+  var newObj = (o instanceof Array) ? [] : {};
+  for (i in o) {
+      newObj[i] = o[i];
+  }
+  return newObj;
+};
+/* Main:
+ * load i18n
+ * load UI files
+ * signal-slots connections
+ */
+
+try {
+
+// Puts configuration in the NowPlaying object.
+var NowPlaying = clone(NowPlayingDefaults);
+readConfig();
+
+// FIXME Load i18n
+// var translator = new QTranslator();
+// translator.load("NowPlayingTranslations", "/translations");
+// QMainApplication.installTranslator(&translator);
+function qsTr(p) {return String(p)}
+
+// Load UI files
+var UIloader = new QUiLoader( this );
+var uiFile = new QFile ( Amarok.Info.scriptPath() + "/Configure.ui" );
+uiFile.open( QIODevice.ReadOnly );
+var configureDialog = UIloader.load( uiFile, this);
+uiFile.close();
+
+configureDialog.accepted.connect(saveConfiguration);
+configureDialog.tabWidget.children()[0].tab_Advanced.pushButton_RestoreDefaults.clicked.connect(
+	configDiagRestoreDefaults);
+// example: configureDialog.tabWidget.children()[0].tab_Login.label_Pseudo
+configureDialog.tabWidget.children()[0].tab_Login.label_NoticeLogin.setText(
+	configureDialog.tabWidget.children()[0].tab_Login.label_NoticeLogin.text.replace(
+	"%1", NowPlaying.RemoteAppBase+"/"));
+configureDialog.tabWidget.children()[0].tab_Proxy.pushButton_ProxyGuess.clicked.connect(
+	proxyGuessFromEnvEvent);
+
+var commentPostDataCache;
+
+uiFile = new QFile ( Amarok.Info.scriptPath() + "/CommentPost.ui" );
+uiFile.open( QIODevice.ReadOnly );
+var commentPostDialog = UIloader.load( uiFile, this);
+uiFile.close();
+
+// commentPostDialog.lineEdit_Message.textEdited.connect(commentPostRefreshPreview);
+// commentPostDialog.textEdit_Comment.textChanged.connect(commentPostRefreshPreview);
+commentPostDialog.accepted.connect(processCommentPost);
+
+
+initBeta();
+
+// Check new version each 10 minutes until done (see QHttp.prototype.nowPlayingProcessReply)
+var timer = new QTimer();
+timer.timeout.connect( checkUpdate );
+timer.singleShot = true;
+timer.start(1000 * 60 * 10); // 10 minutes
+
+Amarok.Window.addSettingsSeparator();
+Amarok.Window.addSettingsMenu( "npConfigure", qsTr("NowPlaying - Configure") );
+Amarok.Window.SettingsMenu.npConfigure['triggered()'].connect( configureEventHandler );
+
+Amarok.Window.addToolsSeparator();
+Amarok.Window.addToolsMenu( "npCommentPost", qsTr("NowPlaying - Comment this song") );
+Amarok.Window.ToolsMenu.npCommentPost['triggered()'].connect( commentPostEventHandler );
+
+var lastProcessedEventId;
+var eventDelay = new QTimer();
+eventDelay.singleShot = true;
+function delayTrackEventHandler() {
+	eventDelay.start(2000);
+}
+eventDelay.timeout.connect( trackEventHandler );
+
+Amarok.Engine.trackPlayPause.connect( delayTrackEventHandler );
+Amarok.Engine.trackChanged.connect( delayTrackEventHandler );
+Amarok.Engine.trackFinished.connect( delayTrackEventHandler );
+
+var debug_text_box = 0;
+initDebug();
+
+debugObject(NowPlaying);
+debugObject(NowPlayingDefaults);
+
+} catch (err) { debugException(err, "main"); }

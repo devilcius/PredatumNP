@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>devilcius</author>
+ <class>Dialog_Configure</class>
+ <widget class="QDialog" name="Dialog_Configure">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>365</width>
+    <height>360</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>PredatumNP - Configure</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_Title">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">padding: 10px 0px 20px 0px;</string>
+     </property>
+     <property name="text">
+      <string>Configure PredatumNP</string>
+     </property>
+     <property name="textInteractionFlags">
+      <set>Qt::NoTextInteraction</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab_Login">
+      <attribute name="title">
+       <string>Login</string>
+      </attribute>
+      <layout class="QFormLayout" name="formLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_Pseudo">
+         <property name="text">
+          <string>Pseudo</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_Pseudo</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="lineEdit_Pseudo"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_Password">
+         <property name="text">
+          <string>Password</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_Password</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEdit_Password">
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QLabel" name="label_NoticeLogin">
+         <property name="text">
+          <string>&lt;p&gt;&lt;strong&gt;Notice:&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;You must register at &lt;a href=&quot;%1&quot;&gt;NowPlaying's website&lt;/a&gt; in order to use this application. This is free.&lt;/p&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_General">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <layout class="QFormLayout" name="formLayout_3">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBox_UseNowPlaying">
+         <property name="text">
+          <string>Use NowPlaying</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_Proxy">
+      <attribute name="title">
+       <string>Proxy</string>
+      </attribute>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_ProxyConf">
+         <property name="text">
+          <string>HTTP Proxy configuration</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_ProxyHostPort">
+         <property name="text">
+          <string>Host</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_ProxyHost</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="lineEdit_ProxyHost"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_ProxyPort">
+         <property name="text">
+          <string>Port</string>
+         </property>
+         <property name="buddy">
+          <cstring>spinBox_ProxyPort</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QSpinBox" name="spinBox_ProxyPort">
+         <property name="maximum">
+          <number>100000</number>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_ProxyUser">
+         <property name="text">
+          <string>Username</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_ProxyUser</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="lineEdit_ProxyUser"/>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_ProxyPassword">
+         <property name="text">
+          <string>Password</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_ProxyPassword</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="lineEdit_ProxyPassword"/>
+       </item>
+       <item row="7" column="0" colspan="2">
+        <widget class="QPushButton" name="pushButton_ProxyGuess">
+         <property name="text">
+          <string>Take from default environment variable</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="Line" name="line_2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkBox_ProxyEnabled">
+         <property name="text">
+          <string>Use HTTP Proxy</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_Advanced">
+      <attribute name="title">
+       <string>Advanced</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_RemoteAppBase">
+         <property name="text">
+          <string>NowPlaying provider's base url</string>
+         </property>
+         <property name="buddy">
+          <cstring>lineEdit_RemoteAppBase</cstring>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_RemoteAppBase"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_RestoreDefaults">
+         <property name="text">
+          <string>Restore defaults</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBox_EnableBetaFeatures">
+         <property name="text">
+          <string>Enable beta features</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBox_ShowDebug">
+         <property name="text">
+          <string>Show debug messages</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>lineEdit_Pseudo</tabstop>
+  <tabstop>lineEdit_Password</tabstop>
+  <tabstop>checkBox_UseNowPlaying</tabstop>
+  <tabstop>checkBox_ProxyEnabled</tabstop>
+  <tabstop>lineEdit_ProxyHost</tabstop>
+  <tabstop>spinBox_ProxyPort</tabstop>
+  <tabstop>lineEdit_ProxyUser</tabstop>
+  <tabstop>lineEdit_ProxyPassword</tabstop>
+  <tabstop>pushButton_ProxyGuess</tabstop>
+  <tabstop>lineEdit_RemoteAppBase</tabstop>
+  <tabstop>pushButton_RestoreDefaults</tabstop>
+  <tabstop>checkBox_EnableBetaFeatures</tabstop>
+  <tabstop>checkBox_ShowDebug</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog_Configure</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>264</x>
+     <y>479</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog_Configure</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>332</x>
+     <y>479</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
