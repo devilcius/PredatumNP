@@ -28,6 +28,11 @@ Importer.include("moment.js")
 Importer.include("lame_info.js")
 
 
+//globar vars	
+var ratingPostData = {};
+var currentSongDataFromServer = {};
+var cookieHeader = null;
+
 /* POST network requests handling class
  */
 var DataPOSTer = {
@@ -130,7 +135,7 @@ QHttp.prototype.processLoginReply = function () { try {
 		
 	var replyData = parseJSON(this.readAll().toString());	
 	if(!replyData.error)
-		var cookieHeader = this.lastResponse().toString().match(/ci_session=.*path=\//)[0];
+		cookieHeader = this.lastResponse().toString().match(/ci_session=.*path=\//)[0];
 	else {
 		Amarok.alert("Login failed: " + replyData.error[1]);
 		return false;
@@ -149,24 +154,31 @@ QHttp.prototype.nowPlayingProcessReply = function (error) { try {
 	
 	if ( !error ) {
 		
-		var replyData = parseJSON(this.readAll().toString());	
+		var rawReplyData = this.readAll().toString();
+		
+		debugMessage(rawReplyData, "Reply data");		
+		
+		var replyData = parseJSON(rawReplyData);	
 		if(replyData.error) {
 			if(replyData.error[0] == "login_error") //cookie not valid anymore?
 				authenticateToPredatum();
 			else
-				showMessage(qsTr("NowPlaying - Error while posting to server:" + replyData.error[1]));		
+				showMessage(qsTr("PredatumNP - Error while posting to server:" + replyData.error[1]));		
 		}
+		//data successfully processed by server
 		else {
-			if(replyData.user_track) {
-				Amarok.alert("user_track: " + replyData.user_track);
+			//song data succesfully posted, store song data from server		
+			if(replyData.np_data) {
+				currentSongDataFromServer = replyData.np_data;
+				debugMessage(replyData.np_data.user_track, 'user_track');
 			}
+			//music rated successfully, show status bar message
+			else if (replyData.rating_response)
+				Amarok.Window.Statusbar.shortMessage(qsTr("PredatumNP - " + replyData.rating_response[1]) );
 			//to be completed with other possible responses
 			else
 				Amarok.alert(this.readAll().toString())
-		}
-				
-		
-		debugMessage(this.readAll().toString(), "HTTP");
+		}				
 		
 		// if ( this.param == "update" )
 			// timer.start(1000 * 60 * 10); // 10 minutes
@@ -257,34 +269,43 @@ function parseJSON(str) { try {
 } catch (err) { debugException(err, "function parseJSON"); } }	
 
 
-/* Called on 'special' post event #### TODO: averiguar qué hace ####
+/* Called on 'comment' post event
  */
 function commentPostEventHandler() { try {
-	commentPostDataCache = fetchTrackData();
-	if (commentPostDataCache !== false) {
-		commentPostDataCache.param = "special";
+
+	if (!isEmpty(currentSongDataFromServer)) {
+		var data = fetchTrackData();
+		ratingPostData.action = "np_rating";
 		
 		// Add info to SongInfo label
 		commentPostDialog.frame_SongInfo.label_SongInfo.setText(
 			"<strong>%TITLE%</strong> by <strong>%ARTIST%</strong> on <em>%ALBUM%</em>"
-			.replace(/%TITLE%/g, commentPostDataCache.title)
-			.replace(/%ARTIST%/g, commentPostDataCache.artist)
-			.replace(/%ALBUM%/g, commentPostDataCache.album)
+			.replace(/%TITLE%/g, data.title)
+			.replace(/%ARTIST%/g, data.artist)
+			.replace(/%ALBUM%/g, data.album)
+			
 		);
+		//set spin boxes values from server data
+		commentPostDialog.rateThisAlbum.setValue(currentSongDataFromServer.user_release_rating);
+		commentPostDialog.rateThisSong.setValue(currentSongDataFromServer.user_track_rating);
 	}
 	else {
 		commentPostDialog.frame_SongInfo.label_SongInfo.setText(
-			qsTr("No song to comment on!"));
+			qsTr("No music to comment on!"));
 	}
 	
-	commentPostDialog.lineEdit_Message.setEnabled(commentPostDataCache !== false);
-	commentPostDialog.textEdit_Comment.setEnabled(commentPostDataCache !== false);
-	commentPostDialog.label_Message.setEnabled(commentPostDataCache !== false);
-	commentPostDialog.label_Comment.setEnabled(commentPostDataCache !== false);
+	commentPostDialog.rateThisAlbumLabel.setEnabled(!isEmpty(currentSongDataFromServer));	
+	commentPostDialog.rateThisAlbum.setEnabled(!isEmpty(currentSongDataFromServer));
+	commentPostDialog.rateThisSongLabel.setEnabled(!isEmpty(currentSongDataFromServer));	
+	commentPostDialog.rateThisSong.setEnabled(!isEmpty(currentSongDataFromServer));	
+	commentPostDialog.commentThisAlbumLabel.setEnabled(!isEmpty(currentSongDataFromServer));	
+	commentPostDialog.commentThisAlbum.setEnabled(!isEmpty(currentSongDataFromServer));
+	commentPostDialog.commentThisSongLabel.setEnabled(!isEmpty(currentSongDataFromServer));	
+	commentPostDialog.commentThisSong.setEnabled(!isEmpty(currentSongDataFromServer));	
 	
 	// Reset fields in commentPostDialog
-	commentPostDialog.lineEdit_Message.setText("");
-	commentPostDialog.textEdit_Comment.setText("");
+	// commentPostDialog.rateThisAlbum.clear();
+	// commentPostDialog.commentThisAlbum.setText("");
 	
 	// TODO reset previews
 	
@@ -294,12 +315,17 @@ function commentPostEventHandler() { try {
 /* Called when commentPostDialog is accepted
  */
 function processCommentPost() { try {
-	if (commentPostDataCache !== false) {
-		commentPostDataCache.special_message = commentPostDialog.lineEdit_Message.text;
-		commentPostDataCache.special_comment = commentPostDialog.textEdit_Comment.plainText;
-		// TODO fetch data from dialog about wich handlers to use
+	
+	if (!isEmpty(currentSongDataFromServer)) {
+	
+		ratingPostData.user_track_id = currentSongDataFromServer.user_track;
+		ratingPostData.album_rating = commentPostDialog.rateThisAlbum.value;
+		ratingPostData.album_comment = commentPostDialog.commentThisAlbum.plainText;
+		ratingPostData.song_rating = commentPostDialog.rateThisSong.value;
+		ratingPostData.song_comment = commentPostDialog.commentThisSong.plainText;				
 		
-		sendData(commentPostDataCache, null);
+		// TODO fetch data from dialog about which handlers to use
+		sendData(ratingPostData, cookieHeader);
 	}
 } catch (err) { debugException(err, "function processCommentPost"); } }
 
@@ -423,11 +449,9 @@ function proxyGuessFromEnvEvent() { try {
 	
 } catch (err) { debugException(err, "function proxyGuessFromEnvEvent"); } }
 
-
 function configDiagRestoreDefaults() { try {
 	configureDialog.tabWidget.children()[0].tab_Advanced.lineEdit_RemoteAppBase.setText(NowPlayingDefaults.RemoteAppBase);
 } catch (err) { debugException(err, "function configDiagRestoreDefaults"); } }
-
 
 /* Called on track event (play/pause/stop)
  */
@@ -458,12 +482,17 @@ function trackEventHandler() { try {
 				break;
 			case 1:
 			case 2:
-				postData.param = "none";
+				postData = {}
+				postData.action = "stop";
+				postData.current_song_id = currentSongDataFromServer.user_track;
+				currentSongDataFromServer = {};
 				break;
 		}
-		
-		if(Amarok.Script.readConfig("cookie", "") != "") 
-			sendData(postData, Amarok.Script.readConfig("cookie", "") + "");
+	
+		if(Amarok.Script.readConfig("cookie", "") != "") {
+			cookieHeader = Amarok.Script.readConfig("cookie", "") + "";
+			sendData(postData, cookieHeader);
+		}
 		else
 			authenticateToPredatum();
 	}
@@ -482,7 +511,7 @@ function showMessage(message, icon, format) { try {
 	if ( icon == "" || icon == undefined ) {
 		icon = "Information";
 	}
-	var diag = new QMessageBox(QMessageBox[icon], "NowPlaying - Amarok", message);
+	var diag = new QMessageBox(QMessageBox[icon], "PredatumNP - Amarok", message);
 	if ( format ) {
 		diag.textFormat = Qt[format];
 	}
@@ -563,6 +592,14 @@ function clone(o) {
   }
   return newObj;
 };
+
+function isEmpty(o) {
+    for(var i in o) 
+        if(o.hasOwnProperty(i))
+            return false;
+ 
+    return true;
+}
 /* Main:
  * load i18n
  * load UI files
@@ -598,15 +635,14 @@ configureDialog.tabWidget.children()[0].tab_Login.label_NoticeLogin.setText(
 configureDialog.tabWidget.children()[0].tab_Proxy.pushButton_ProxyGuess.clicked.connect(
 	proxyGuessFromEnvEvent);
 
-var commentPostDataCache;
 
 uiFile = new QFile ( Amarok.Info.scriptPath() + "/CommentPost.ui" );
 uiFile.open( QIODevice.ReadOnly );
 var commentPostDialog = UIloader.load( uiFile, this);
 uiFile.close();
 
-// commentPostDialog.lineEdit_Message.textEdited.connect(commentPostRefreshPreview);
-// commentPostDialog.textEdit_Comment.textChanged.connect(commentPostRefreshPreview);
+// commentPostDialog.rateThisAlbum.textEdited.connect(commentPostRefreshPreview);
+// commentPostDialog.commentThisAlbum.textChanged.connect(commentPostRefreshPreview);
 commentPostDialog.accepted.connect(processCommentPost);
 
 
@@ -619,11 +655,11 @@ timer.singleShot = true;
 timer.start(1000 * 60 * 10); // 10 minutes
 
 Amarok.Window.addSettingsSeparator();
-Amarok.Window.addSettingsMenu( "npConfigure", qsTr("NowPlaying - Configure") );
+Amarok.Window.addSettingsMenu( "npConfigure", qsTr("PredatumNP - Configure") );
 Amarok.Window.SettingsMenu.npConfigure['triggered()'].connect( configureEventHandler );
 
 Amarok.Window.addToolsSeparator();
-Amarok.Window.addToolsMenu( "npCommentPost", qsTr("NowPlaying - Comment this song") );
+Amarok.Window.addToolsMenu( "npCommentPost", qsTr("PredatumNP - Rate this music") );
 Amarok.Window.ToolsMenu.npCommentPost['triggered()'].connect( commentPostEventHandler );
 
 var lastProcessedEventId;

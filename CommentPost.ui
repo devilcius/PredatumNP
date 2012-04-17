@@ -8,7 +8,7 @@
     <x>0</x>
     <y>0</y>
     <width>489</width>
-    <height>342</height>
+    <height>369</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
       <string notr="true">padding: 10px 0px 20px 0px;</string>
      </property>
      <property name="text">
-      <string>Publish a special comment about this song</string>
+      <string>What do you think about this album?</string>
      </property>
      <property name="textInteractionFlags">
       <set>Qt::NoTextInteraction</set>
@@ -58,34 +58,48 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="label_Message">
+    <widget class="QLabel" name="rateThisAlbumLabel">
      <property name="text">
-      <string>Message</string>
-     </property>
-     <property name="buddy">
-      <cstring>lineEdit_Message</cstring>
+      <string>Rate this album</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
-    <widget class="QLineEdit" name="lineEdit_Message">
-     <property name="dragEnabled">
-      <bool>true</bool>
+    <widget class="QSpinBox" name="rateThisAlbum">
+     <property name="maximum">
+      <number>10</number>
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QLabel" name="label_Comment">
+   <item row="4" column="0">
+    <widget class="QLabel" name="rateThisSongLabel">
      <property name="text">
-      <string>Additionnal comment</string>
+      <string>Rate this song</string>
      </property>
-     <property name="buddy">
-      <cstring>textEdit_Comment</cstring>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="rateThisSong">
+     <property name="mouseTracking">
+      <bool>true</bool>
+     </property>
+     <property name="maximum">
+      <number>10</number>
      </property>
     </widget>
    </item>
    <item row="5" column="0" colspan="2">
-    <widget class="QTextEdit" name="textEdit_Comment">
+    <widget class="QLabel" name="commentThisAlbumLabel">
+     <property name="text">
+      <string>Comment this album</string>
+     </property>
+     <property name="buddy">
+      <cstring>commentThisAlbum</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QTextEdit" name="commentThisAlbum">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -99,11 +113,11 @@
       <bool>true</bool>
      </property>
      <property name="acceptRichText">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="2">
+   <item row="9" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -116,11 +130,24 @@
      </property>
     </widget>
    </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="commentThisSongLabel">
+     <property name="text">
+      <string>Comment this song</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QTextEdit" name="commentThisSong">
+     <property name="tabChangesFocus">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
-  <tabstop>lineEdit_Message</tabstop>
-  <tabstop>textEdit_Comment</tabstop>
+  <tabstop>commentThisAlbum</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
