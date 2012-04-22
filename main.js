@@ -32,6 +32,9 @@ Importer.include("lame_info.js")
 var ratingPostData = {};
 var currentSongDataFromServer = {};
 var cookieHeader = null;
+var loginAttempts = 0;
+var previousStatus = 2;
+var previousSong = "";
 
 /* POST network requests handling class
  */
@@ -47,7 +50,6 @@ var DataPOSTer = {
 		if ( HTTPParams ) {		
 			for ( var i in HTTPParams ) {
 				postRequest.setValue(i, HTTPParams[i]);
-				debugMessage("param: "+ HTTPParams[i], "DataPOSTer");
 			}
 		}
 		
@@ -72,7 +74,6 @@ var DataPOSTer = {
 	},	
 	getCustomQHttp: function(url, byteArrayData, requestHeader) {
 		var http = new QHttp();
-		debugMessage("host: "+url.encodedHost(), "DataPOSTer");
 		if (NowPlaying.Proxy.enabled) {
 			var proxy = new QNetworkProxy();
 			proxy.setType(QNetworkProxy.HttpProxy);
@@ -95,7 +96,7 @@ function sendData( data, cookieHeader ) { try {
 	
 	var url = new QUrl(NowPlaying.RemoteAppBase + "/api/nowplaying/format/json");
 		
-	var HTTPParams = {"User-Agent": "NowPlaying script"}; // TODO define what to put here
+	var HTTPParams = {"User-Agent": "PredatumNP here"};
 	HTTPParams['Cookie'] = cookieHeader;
 	
 	var http = DataPOSTer.simple(url, data, HTTPParams);	
@@ -111,14 +112,14 @@ function sendData( data, cookieHeader ) { try {
 function authenticateToPredatum() { try {
 	var url = new QUrl(NowPlaying.RemoteAppBase + '/api/login/format/json');	
 	
-	var HTTPParams = {"User-Agent": "NowPlaying script" }; // TODO define what to put here
+	var HTTPParams = {"User-Agent": "PredatumNP here" };
 	
 	
 	var data = {};
 	data.login = NowPlaying.UserName;
 	data.password = NowPlaying.UserPassword;
 	data.remember = '1';
-	data.submit = 'Let me in';
+	// data.submit = 'Let me in';
 	
 	//debugMessage("authenticating with user / pass: " + NowPlaying.UserName + " / " + NowPlaying.UserPassword , "DataPOSTer");		
 	var http = DataPOSTer.simple(url, data, HTTPParams);	
@@ -132,17 +133,26 @@ function authenticateToPredatum() { try {
 /* Process authentication and send track data.
  */
 QHttp.prototype.processLoginReply = function () { try {
-		
-	var replyData = parseJSON(this.readAll().toString());	
-	if(!replyData.error)
-		cookieHeader = this.lastResponse().toString().match(/ci_session=.*path=\//)[0];
+	
+	var rawReplyData = this.readAll().toString();		
+	debugMessage(rawReplyData, "QHttp.prototype.processLoginReply");
+	
+	var replyData = parseJSON(rawReplyData);	
+	
+	if(!replyData.error) {
+		var response = this.lastResponse().toString();
+		var cookieHeader = response.match(/ci_session=[^;]+/)[0];
+		if(response.search('autologin'))
+			cookieHeader = cookieHeader + "; " + response.match(/autologin=[^;]+/)[0]
+				
+	}
 	else {
 		Amarok.alert("Login failed: " + replyData.error[1]);
 		return false;
 	}
-	
+
 	Amarok.Script.writeConfig("cookie", cookieHeader);
-	debugMessage("Writing cookie","QHttp.prototype.processLoginReply");
+	debugMessage(cookieHeader,"QHttp.prototype.processLoginReply");
 	
 	sendData(fetchTrackData(), cookieHeader);
 	
@@ -156,30 +166,32 @@ QHttp.prototype.nowPlayingProcessReply = function (error) { try {
 		
 		var rawReplyData = this.readAll().toString();
 		
-		debugMessage(rawReplyData, "Reply data");		
+		debugMessage(rawReplyData, "QHttp.prototype.nowPlayingProcessReply");	
 		
+		var replyData = parseJSON(rawReplyData);
+							
 		var replyData = parseJSON(rawReplyData);	
 		if(replyData.error) {
-			if(replyData.error[0] == "login_error") //cookie not valid anymore?
+			if(replyData.error[0] == "login_error" && loginAttempts < 3) {//cookie not valid anymore?
 				authenticateToPredatum();
+				loginAttempts++;
+			}
 			else
 				showMessage(qsTr("PredatumNP - Error while posting to server:" + replyData.error[1]));		
 		}
 		//data successfully processed by server
 		else {
-			//song data succesfully posted, store song data from server		
-			if(replyData.np_data) {
+			//song data succesfully posted, keep song data returned from server		
+			if(replyData.np_data)
 				currentSongDataFromServer = replyData.np_data;
-				debugMessage(replyData.np_data.user_track, 'user_track');
-			}
-			//music rated successfully, show status bar message
-			else if (replyData.rating_response)
-				Amarok.Window.Statusbar.shortMessage(qsTr("PredatumNP - " + replyData.rating_response[1]) );
-			//to be completed with other possible responses
+			//music rated or playing status changed, show status bar message
+			else if (replyData.status_response)
+				Amarok.Window.Statusbar.shortMessage(qsTr("Predatum: " + replyData.status_response[1]) );			
+			//something went wrong
 			else
-				Amarok.alert(this.readAll().toString())
+				Amarok.alert(rawReplyData)
 		}				
-		
+	
 		// if ( this.param == "update" )
 			// timer.start(1000 * 60 * 10); // 10 minutes
 			
@@ -190,7 +202,6 @@ QHttp.prototype.nowPlayingProcessReply = function (error) { try {
 
 QHttp.prototype.go = function() { try {
 	if ( this.requestHeader && this.data ) {
-		debugMessage(this.requestHeader.toString(), "QHttp.go()");
 		this.request(this.requestHeader, this.data);
 	}
 } catch (err) { debugException(err, "function QHttp.prototype.go"); } };
@@ -218,8 +229,9 @@ function fetchTrackData() { try {
 		return false;
 	}
 	var data = {};
-	var f = new QFileInfo(Amarok.Engine.currentTrack().path);
 	
+	data.action = 'play';	
+	var f = new QFileInfo(Amarok.Engine.currentTrack().path);
 	data.file_name = f.fileName();
 	data.file_size = f.size();
 	data.folder_name = f.canonicalPath()
@@ -252,7 +264,6 @@ function fetchTrackData() { try {
 	}	
 	return data;
 } catch (err) { debugException(err, "function fetchTrackData"); } }	
-
 
 /* returns a json object from a string */
 function parseJSON(str) { try {
@@ -471,22 +482,28 @@ function trackEventHandler() { try {
 		}
 		lastProcessedEventId = eventId;
 		
-		// Determine wich param to use: none or post
 		var postData = {};
 		var state = Amarok.Engine.engineState(); // 0: playing, 1: pause, 2: stop
 		switch ( state ) {
 			case 0:
 				// Add track informations
 				postData = fetchTrackData();
-				postData.param = "post";
+				postData.action = (previousStatus == 1 && (previousSong == postData.file_name))?"unpause":"play";
+				previousStatus = 0;
+				previousSong = postData.file_name
 				break;
-			case 1:
+			case 1:			
+				postData.action = "pause";
+				postData.current_song_id = currentSongDataFromServer.user_track;
+				previousStatus = 1;
+				break;
 			case 2:
-				postData = {}
 				postData.action = "stop";
 				postData.current_song_id = currentSongDataFromServer.user_track;
 				currentSongDataFromServer = {};
+				previousStatus = 2;
 				break;
+				
 		}
 	
 		if(Amarok.Script.readConfig("cookie", "") != "") {
@@ -503,7 +520,6 @@ function trackEventHandler() { try {
 function commentPostRefreshPreview() { try {
 	// TODO
 } catch (err) { debugException(err, "function commentPostRefreshPreview"); } }
-
 
 /* Shows message as Amarok.Alert()
  */
@@ -578,7 +594,7 @@ function initBeta() { try {
 	}
 } catch (err) { debugException(err, "function initBeta"); } }
 
-/* Workarounds
+/* Utilities
  */
 QByteArray.prototype.toString = function() {
 	ts = new QTextStream( this, QIODevice.ReadOnly );
