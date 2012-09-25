@@ -79,7 +79,7 @@
         <widget class="QLabel" name="label_NoticeLogin">
          <property name="text">
           <string>&lt;p&gt;&lt;strong&gt;Notice:&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;You must register at &lt;a href=&quot;%1&quot;&gt;NowPlaying's website&lt;/a&gt; in order to use this application. This is free.&lt;/p&gt;</string>
+&lt;p&gt;You must register at &lt;a href=&quot;%1&quot;&gt;predatum's website&lt;/a&gt; in order to use this application.&lt;/p&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

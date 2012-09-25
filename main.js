@@ -246,7 +246,7 @@ function fetchTrackData() { try {
 	data.rating = Amarok.Engine.currentTrack().rating;
 	data.counter = Amarok.Engine.currentTrack().playCount;
 	data.genre = Amarok.Engine.currentTrack().genre;
-	data.track_duration = Amarok.Engine.currentTrack().length;
+	data.duration = (Amarok.Engine.currentTrack().length / 1000 );
 	data.year = Amarok.Engine.currentTrack().year;
 	data.bitrate  = Amarok.Engine.currentTrack().bitrate;
 	data.comment = Amarok.Engine.currentTrack().comment;
