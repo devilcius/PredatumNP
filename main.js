@@ -16,7 +16,7 @@ NowPlayingDefaults.Proxy = {
 	"host" : "example.com",
 	"port" : "8080",
 	"user" : "johndoe",
-	"password" : "pouet"
+	"password" : "pred"
 };
 //dependencies
 Importer.loadQtBinding( "qt.core" );
@@ -471,10 +471,10 @@ function trackEventHandler() { try {
 		// Make an id for this request (workaround)
 		var eventId;
 		try {
-			eventId = "pouet" + Amarok.Engine.engineState() + Amarok.Engine.currentTrack().title + Amarok.Engine.currentTrack().artist + Amarok.Engine.currentTrack().album;
+			eventId = "pred" + Amarok.Engine.engineState() + Amarok.Engine.currentTrack().title + Amarok.Engine.currentTrack().artist + Amarok.Engine.currentTrack().album;
 		}
 		catch(e) {
-			eventId = "pouet" + Amarok.Engine.engineState();
+			eventId = "pred" + Amarok.Engine.engineState();
 		}
 		
 		if ( eventId == lastProcessedEventId ) {
@@ -488,7 +488,7 @@ function trackEventHandler() { try {
 			case 0:
 				// Add track informations
 				postData = fetchTrackData();
-				postData.action = (previousStatus == 1 && (previousSong == postData.file_name))?"unpause":"play";
+				postData.action = (previousStatus == 1 && (previousSong == postData.file_name))?"resume":"play";
 				previousStatus = 0;
 				previousSong = postData.file_name
 				break;
