@@ -5,6 +5,7 @@ var NowPlayingDefaults = {};
 NowPlayingDefaults.Version = "0.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "http://192.168.2.40";
+NowPlayingDefaults.RemoteAppBasePort = 2014;
 
 NowPlayingDefaults.ShowDebug = true;
 // Beta function:
@@ -52,9 +53,8 @@ var DataPOSTer = {
 				postRequest.setValue(i, HTTPParams[i]);
 			}
 		}
-		
 		postRequest.setRequest("POST", url.encodedPath().toString(), 1, 1);
-		postRequest.setValue("Host", url.encodedHost().toString());
+		postRequest.setValue("Host", url.encodedHost().toString());	
 		postRequest.setContentType("application/x-www-form-urlencoded");
 		
 		var postDataByteArray = new QByteArray();
@@ -83,7 +83,7 @@ var DataPOSTer = {
 			proxy.setPassword(NowPlaying.Proxy.password);
 			http.setProxy(proxy);
 		}
-		http.setHost(url.encodedHost());
+		http.setHost(url.encodedHost(), null, NowPlaying.RemoteAppBasePort);		
 		http.requestHeader = requestHeader;	
 		http.data = byteArrayData;			
 		return http;
@@ -94,8 +94,7 @@ var DataPOSTer = {
  */
 function sendData( data, cookieHeader ) { try {
 	
-	var url = new QUrl(NowPlaying.RemoteAppBase + "/api/nowplaying/format/json");
-		
+	var url = new QUrl(NowPlaying.RemoteAppBase + "/api/scrobbler");
 	var HTTPParams = {"User-Agent": "PredatumNP here"};
 	HTTPParams['Cookie'] = cookieHeader;
 	
@@ -110,18 +109,16 @@ function sendData( data, cookieHeader ) { try {
 /* authenticates user in server.
  */
 function authenticateToPredatum() { try {
-	var url = new QUrl(NowPlaying.RemoteAppBase + '/api/login/format/json');	
-	
+	var url = new QUrl(NowPlaying.RemoteAppBase + '/api/user/authenticate');
 	var HTTPParams = {"User-Agent": "PredatumNP here" };
 	
 	
 	var data = {};
-	data.login = NowPlaying.UserName;
+	data.email = NowPlaying.UserName;
 	data.password = NowPlaying.UserPassword;
 	data.remember = '1';
-	// data.submit = 'Let me in';
 	
-	//debugMessage("authenticating with user / pass: " + NowPlaying.UserName + " / " + NowPlaying.UserPassword , "DataPOSTer");		
+	debugMessage("authenticating with user / pass: " + NowPlaying.UserName + " / " + NowPlaying.UserPassword , "DataPOSTer");		
 	var http = DataPOSTer.simple(url, data, HTTPParams);	
 	
 	//http.param = data.param;
@@ -141,9 +138,10 @@ QHttp.prototype.processLoginReply = function () { try {
 	
 	if(!replyData.error) {
 		var response = this.lastResponse().toString();
-		var cookieHeader = response.match(/ci_session=[^;]+/)[0];
-		if(response.search('autologin'))
-			cookieHeader = cookieHeader + "; " + response.match(/autologin=[^;]+/)[0]
+		var cookieHeader = response.match(/laravel_session=[^;]+/)[0];
+		if(response.search('cartalyst_sentry')) {
+			cookieHeader = cookieHeader + "; " + response.match(/cartalyst_sentry=[^;]+/)[0]
+		}
 				
 	}
 	else {
@@ -170,14 +168,16 @@ QHttp.prototype.nowPlayingProcessReply = function (error) { try {
 		
 		var replyData = parseJSON(rawReplyData);
 							
-		var replyData = parseJSON(rawReplyData);	
+		var replyData = parseJSON(rawReplyData);
+		
 		if(replyData.error) {
 			if(replyData.error[0] == "login_error" && loginAttempts < 3) {//cookie not valid anymore?
 				authenticateToPredatum();
 				loginAttempts++;
 			}
-			else
+			else {
 				showMessage(qsTr("PredatumNP - Error while posting to server:" + replyData.error[1]));		
+			}
 		}
 		//data successfully processed by server
 		else {
@@ -185,11 +185,13 @@ QHttp.prototype.nowPlayingProcessReply = function (error) { try {
 			if(replyData.np_data)
 				currentSongDataFromServer = replyData.np_data;
 			//music rated or playing status changed, show status bar message
-			else if (replyData.status_response)
+			else if (replyData.status_response) {
 				Amarok.Window.Statusbar.shortMessage(qsTr("Predatum: " + replyData.status_response[1]) );			
+			}
 			//something went wrong
-			else
+			else {
 				Amarok.alert(rawReplyData)
+			}
 		}				
 	
 		// if ( this.param == "update" )
@@ -351,6 +353,8 @@ function readConfig() { try {
 		NowPlaying.UserPassword = readConfig("userPassword", "") + "";
 		
 		NowPlaying.RemoteAppBase = readConfig("remoteAppBase", NowPlayingDefaults.RemoteAppBase + "") + "";
+		NowPlaying.RemoteAppBase.port =
+			readConfig("remoteAppBasePort", "" + NowPlayingDefaults.RemoteAppBasePort) - 0;		
 		NowPlaying.ShowDebug = ( readConfig("showDebug", NowPlayingDefaults.ShowDebug + "") == "true" );
 		NowPlaying.EnableBetaFeatures = ( readConfig("enableBetaFeatures", NowPlayingDefaults.EnableBetaFeatures + "") == "true" );
 		
@@ -382,6 +386,7 @@ function configureEventHandler() { try {
 		
 		// Advanced
 		tab_Advanced.lineEdit_RemoteAppBase.setText(NowPlaying.RemoteAppBase);
+		tab_Advanced.lineEdit_RemoteAppBasePort.setText(NowPlaying.RemoteAppBasePort);		
 		tab_Advanced.checkBox_ShowDebug.setChecked(NowPlaying.ShowDebug);
 		tab_Advanced.checkBox_EnableBetaFeatures.setChecked(NowPlaying.EnableBetaFeatures);
 		
@@ -413,6 +418,8 @@ function saveConfiguration() { try {
 		
 		Amarok.Script.writeConfig("remoteAppBase",
 			tab_Advanced.lineEdit_RemoteAppBase.text + "");
+		Amarok.Script.writeConfig("remoteAppBasePort",
+			tab_Advanced.lineEdit_RemoteAppBasePort.text + "");			
 		Amarok.Script.writeConfig("showDebug",
 			tab_Advanced.checkBox_ShowDebug.checked + "");
 		Amarok.Script.writeConfig("enableBetaFeatures",
@@ -510,8 +517,9 @@ function trackEventHandler() { try {
 			cookieHeader = Amarok.Script.readConfig("cookie", "") + "";
 			sendData(postData, cookieHeader);
 		}
-		else
+		else {
 			authenticateToPredatum();
+			}
 	}
 } catch (err) { debugException(err, "function trackEventHandler"); } }
 
@@ -541,9 +549,9 @@ function debugException(e, context) {
 	var data = "NowPlaying - Error:\n\nMessage: "+e+"\n"+"Context: "+context+"\n\n"+
 		"An exception was found. You should upgrade your script, or, "+
 		"if you have the latest version, submit a bug report. Thanks!";
-// 		for ( var i in e ) {
-// 			data += i+": "+e[i]+"\n";
-// 		}
+ 		for ( var i in e ) {
+ 			data += i+": "+e[i]+"\n";
+ 		}
 	Amarok.alert(data);
 }
 
