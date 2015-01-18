@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <author>devilcius</author>
- <class>Dialog_AlbumCommentPost</class>
- <widget class="QDialog" name="Dialog_AlbumCommentPost">
+ <class>Dialog_AlbumReviewPost</class>
+ <widget class="QDialog" name="Dialog_AlbumReviewPost">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -12,7 +12,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PredatumNP - Album Comment Post</string>
+   <string>PredatumNP - Album Review Post</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
    <property name="fieldGrowthPolicy">
@@ -89,17 +89,17 @@
     </widget>
    </item>
    <item row="5" column="0" colspan="2">
-    <widget class="QLabel" name="commentThisAlbumLabel">
+    <widget class="QLabel" name="reviewThisAlbumLabel">
      <property name="text">
-      <string>Comment this album</string>
+      <string>Review this album</string>
      </property>
      <property name="buddy">
-      <cstring>commentThisAlbum</cstring>
+      <cstring>reviewThisAlbum</cstring>
      </property>
     </widget>
    </item>
    <item row="6" column="0" colspan="2">
-    <widget class="QTextEdit" name="commentThisAlbum">
+    <widget class="QTextEdit" name="reviewThisAlbum">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -131,14 +131,14 @@
     </widget>
    </item>
    <item row="7" column="0">
-    <widget class="QLabel" name="commentThisSongLabel">
+    <widget class="QLabel" name="reviewThisSongLabel">
      <property name="text">
-      <string>Comment this song</string>
+      <string>Review this song</string>
      </property>
     </widget>
    </item>
    <item row="8" column="0" colspan="2">
-    <widget class="QTextEdit" name="commentThisSong">
+    <widget class="QTextEdit" name="reviewThisSong">
      <property name="tabChangesFocus">
       <bool>true</bool>
      </property>
@@ -147,7 +147,7 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>commentThisAlbum</tabstop>
+  <tabstop>reviewThisAlbum</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
@@ -155,7 +155,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog_AlbumCommentPost</receiver>
+   <receiver>Dialog_AlbumReviewPost</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -171,7 +171,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog_AlbumCommentPost</receiver>
+   <receiver>Dialog_AlbumReviewPost</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

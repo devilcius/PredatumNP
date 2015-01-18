@@ -334,6 +334,17 @@ function commentPostEventHandler() {
             //set spin boxes values from server data
             commentPostDialog.rateThisAlbum.setValue(currentSongDataFromServer.user_release_rating);
             commentPostDialog.rateThisSong.setValue(currentSongDataFromServer.user_track_rating);
+            //set review text from server data
+			var albumReviewText = currentSongDataFromServer.user_release_review;
+			if(albumReviewText === null) {
+				albumReviewText = '';
+			}				
+			var songReviewText = currentSongDataFromServer.user_track_review;
+			if(songReviewText === null) {
+				songReviewText = '';
+			}		
+			commentPostDialog.reviewThisAlbum.setText(qsTr(albumReviewText));
+			commentPostDialog.reviewThisSong.setText(qsTr(songReviewText))			
         }
         else {
             commentPostDialog.frame_SongInfo.label_SongInfo.setText(
@@ -344,14 +355,14 @@ function commentPostEventHandler() {
         commentPostDialog.rateThisAlbum.setEnabled(!isEmpty(currentSongDataFromServer));
         commentPostDialog.rateThisSongLabel.setEnabled(!isEmpty(currentSongDataFromServer));
         commentPostDialog.rateThisSong.setEnabled(!isEmpty(currentSongDataFromServer));
-        commentPostDialog.commentThisAlbumLabel.setEnabled(!isEmpty(currentSongDataFromServer));
-        commentPostDialog.commentThisAlbum.setEnabled(!isEmpty(currentSongDataFromServer));
-        commentPostDialog.commentThisSongLabel.setEnabled(!isEmpty(currentSongDataFromServer));
-        commentPostDialog.commentThisSong.setEnabled(!isEmpty(currentSongDataFromServer));
+        commentPostDialog.reviewThisAlbumLabel.setEnabled(!isEmpty(currentSongDataFromServer));
+        commentPostDialog.reviewThisAlbum.setEnabled(!isEmpty(currentSongDataFromServer));
+        commentPostDialog.reviewThisSongLabel.setEnabled(!isEmpty(currentSongDataFromServer));
+        commentPostDialog.reviewThisSong.setEnabled(!isEmpty(currentSongDataFromServer));
 
         // Reset fields in commentPostDialog
         // commentPostDialog.rateThisAlbum.clear();
-        // commentPostDialog.commentThisAlbum.setText("");
+        // commentPostDialog.reviewThisAlbum.setText("");
 
         // TODO reset previews
 
@@ -370,9 +381,9 @@ function processCommentPost() {
 
             ratingPostData.user_track_id = currentSongDataFromServer.user_track;
             ratingPostData.album_rating = commentPostDialog.rateThisAlbum.value;
-            ratingPostData.album_comment = commentPostDialog.commentThisAlbum.plainText;
+            ratingPostData.album_review = commentPostDialog.reviewThisAlbum.plainText;
             ratingPostData.song_rating = commentPostDialog.rateThisSong.value;
-            ratingPostData.song_comment = commentPostDialog.commentThisSong.plainText;
+            ratingPostData.song_review = commentPostDialog.reviewThisSong.plainText;
 
             // TODO fetch data from dialog about which handlers to use
             sendData(ratingPostData, cookieHeader);
@@ -749,7 +760,7 @@ try {
     uiFile.close();
 
 // commentPostDialog.rateThisAlbum.textEdited.connect(commentPostRefreshPreview);
-// commentPostDialog.commentThisAlbum.textChanged.connect(commentPostRefreshPreview);
+// commentPostDialog.reviewThisAlbum.textChanged.connect(commentPostRefreshPreview);
     commentPostDialog.accepted.connect(processCommentPost);
 
 
