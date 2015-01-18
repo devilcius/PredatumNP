@@ -280,10 +280,10 @@ function fetchTrackData() {
         var now = moment(Date());
         data.start_time = now.format('YYYY-MM-DD H:mm:ss');
         if (getPreset() != null) {
-            data.lame_encoded = 1;
+            data.is_lame_encoded = 1;
             data.quality = getPreset();
         } else {
-            data.lame_encoded = 0;
+            data.is_lame_encoded = 0;
             data.quality = null;
         }
         if (data.filetype == 'FLAC') {
