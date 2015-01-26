@@ -4,7 +4,7 @@ var NowPlayingDefaults = {};
 // Version
 NowPlayingDefaults.Version = "0.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
-NowPlayingDefaults.RemoteAppBase = "http://192.168.2.40";
+NowPlayingDefaults.RemoteAppBase = "http://192.168.1.40";
 NowPlayingDefaults.RemoteAppBasePort = 2014;
 
 NowPlayingDefaults.ShowDebug = true;
@@ -405,8 +405,7 @@ function readConfig() {
             NowPlaying.UserPassword = readConfig("userPassword", "") + "";
 
             NowPlaying.RemoteAppBase = readConfig("remoteAppBase", NowPlayingDefaults.RemoteAppBase + "") + "";
-            NowPlaying.RemoteAppBase.port =
-                    readConfig("remoteAppBasePort", "" + NowPlayingDefaults.RemoteAppBasePort) - 0;
+            NowPlaying.RemoteAppBasePort = readConfig("remoteAppBasePort", "" + NowPlayingDefaults.RemoteAppBasePort) - 0;
             NowPlaying.ShowDebug = (readConfig("showDebug", NowPlayingDefaults.ShowDebug + "") == "true");
             NowPlaying.EnableBetaFeatures = (readConfig("enableBetaFeatures", NowPlayingDefaults.EnableBetaFeatures + "") == "true");
 
