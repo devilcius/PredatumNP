@@ -24,9 +24,9 @@ Importer.loadQtBinding("qt.core");
 Importer.loadQtBinding("qt.gui");
 Importer.loadQtBinding("qt.network");
 Importer.loadQtBinding("qt.uitools");
-
 Importer.include("moment.js")
 Importer.include("lame_info.js")
+
 
 
 //globar vars	
@@ -279,9 +279,10 @@ function fetchTrackData() {
         data.comment = Amarok.Engine.currentTrack().comment;
         var now = moment(Date());
         data.start_time = now.format('YYYY-MM-DD H:mm:ss');
-        if (getPreset() != null) {
+		var preset = getPreset();
+        if (preset !== null) {
             data.is_lame_encoded = 1;
-            data.quality = getPreset();
+            data.quality = preset;
         } else {
             data.is_lame_encoded = 0;
             data.quality = null;

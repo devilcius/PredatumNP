@@ -6,13 +6,20 @@ function getPreset() {
 	f.open(QIODevice.ReadOnly)
 	var data = new QByteArray(f.read(32768));
 	var ts = new QTextStream(data, QIODevice.ReadOnly);
-	var str = ts.read(32768);
+	var str = ts.read(32768);	
+	//embeded image?
+	if(data.indexOf("image") > -1) {
+		data = new QByteArray(f.read(f.size()));
+		ts = new QTextStream(data, QIODevice.ReadOnly);
+		str = ts.read(f.size);
+	}
 	var xing = 0;
 	var is_cbr = false;
 	var preset = null;
+	
 	if(data.indexOf("LAME") == -1) {
 		return null;
-	}
+	} 
 	if(data.indexOf("Xing") > -1) {
 		xing = data.indexOf("Xing");
 	}
@@ -21,11 +28,10 @@ function getPreset() {
 		is_cbr = true;
 	}
 	var encoder = str.substring(xing + 120, xing + 128)
-	var lame = xing + 120;
+	var lame = xing + 120;	
 	var vbr_method = data.at(lame + 9) & 0xF; 
 	var lowpass = data.at(lame + 10) & 0xFF;
 	var ath_type = data.at(lame + 19) & 0xF;
-
 	if (is_cbr) {
 		preset = Amarok.Engine.currentTrack().bitrate; 
 	}
@@ -33,7 +39,7 @@ function getPreset() {
 		preset = (data.at(lame+27) + data.at(lame+28)) & 0x1FF;
 		var array_preset = [410, 420, 430, 440, 450, 460, 470, 480, 490, 500]
 		if (array_preset.indexOf(preset) > -1) {
-			preset = 'V' + ((500 - preset) / 10)	
+			preset = 'V' + ((500 - preset) / 10);
 		}
 		else {
 			var presets = ['R3MIX', 'APS', 'APE', 'API', 'APFS', 'APFE','APM', 'APFM']
