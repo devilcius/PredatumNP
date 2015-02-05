@@ -261,7 +261,7 @@ function fetchTrackData() {
         var f = new QFileInfo(Amarok.Engine.currentTrack().path);
         data.file_name = f.fileName();
         data.file_size = f.size();
-        data.folder_name = f.canonicalPath()
+        data.folder_path = f.canonicalPath()
         var d = moment(f.created().toString());
         data.file_date = d.format('YYYY-MM-DD H:mm:ss');
         data.file_type = f.suffix().toUpperCase();
