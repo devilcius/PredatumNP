@@ -154,7 +154,7 @@ QHttp.prototype.processLoginReply = function () {
 
         }
         else {
-            Amarok.alert("Login failed: " + replyData.error[1]);
+            Amarok.alert("Login failed: " + replyData.message);
             return false;
         }
 
@@ -184,22 +184,23 @@ QHttp.prototype.nowPlayingProcessReply = function (error) {
             var replyData = parseJSON(rawReplyData);
 
             if (replyData.error) {
-                if (replyData.error[0] == "login_error" && loginAttempts < 3) {//cookie not valid anymore?
+                if (replyData.message[0] == "login_error" && loginAttempts < 3) {//cookie not valid anymore?
                     authenticateToPredatum();
                     loginAttempts++;
                 }
                 else {
-                    showMessage(qsTr("PredatumNP - Error while posting to server:" + replyData.error[1]));
+                    showMessage(qsTr("PredatumNP - Error while posting to server:" + replyData.message[1]));
                 }
             }
             //data successfully processed by server
             else {
                 //song data succesfully posted, keep song data returned from server		
-                if (replyData.np_data)
+                if (replyData.np_data) {
                     currentSongDataFromServer = replyData.np_data;
+                }
                 //music rated or playing status changed, show status bar message
-                else if (replyData.status_response) {
-                    Amarok.Window.Statusbar.shortMessage(qsTr("Predatum: " + replyData.status_response[1]));
+                else if (!replyData.error) {
+                    Amarok.Window.Statusbar.shortMessage(qsTr("Predatum: " + replyData.message[1]));
                 }
                 //something went wrong
                 else {
