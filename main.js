@@ -4,8 +4,8 @@ var NowPlayingDefaults = {};
 // Version
 NowPlayingDefaults.Version = "0.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
-NowPlayingDefaults.RemoteAppBase = "http://predatum.com";
-NowPlayingDefaults.RemoteAppBasePort = 80;
+NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
+NowPlayingDefaults.RemoteAppBasePort = 443;
 
 NowPlayingDefaults.ShowDebug = true;
 // Beta function:
@@ -83,7 +83,7 @@ var DataPOSTer = {
             proxy.setPassword(NowPlaying.Proxy.password);
             http.setProxy(proxy);
         }
-        http.setHost(url.encodedHost(), http.ConnectionModeHttps, NowPlaying.RemoteAppBasePort);
+        http.setHost(url.encodedHost(), QHttp.ConnectionModeHttps, NowPlaying.RemoteAppBasePort);
         http.requestHeader = requestHeader;
         http.data = byteArrayData;
         return http;
