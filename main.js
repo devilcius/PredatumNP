@@ -2,7 +2,7 @@
 var NowPlayingDefaults = {};
 
 // Version
-NowPlayingDefaults.Version = "0.1";
+NowPlayingDefaults.Version = "1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
 NowPlayingDefaults.RemoteAppBasePort = 443;
@@ -443,7 +443,7 @@ function configureEventHandler() {
 
             // Advanced
             tab_Advanced.lineEdit_RemoteAppBase.setText(NowPlaying.RemoteAppBase);
-            tab_Advanced.lineEdit_RemoteAppBasePort.setText(NowPlaying.RemoteAppBasePort);
+            tab_Advanced.spinBox_RemoteAppBasePort.setValue(NowPlaying.RemoteAppBasePort);
             tab_Advanced.checkBox_ShowDebug.setChecked(NowPlaying.ShowDebug);
             tab_Advanced.checkBox_EnableBetaFeatures.setChecked(NowPlaying.EnableBetaFeatures);
 
@@ -480,7 +480,7 @@ function saveConfiguration() {
             Amarok.Script.writeConfig("remoteAppBase",
                     tab_Advanced.lineEdit_RemoteAppBase.text + "");
             Amarok.Script.writeConfig("remoteAppBasePort",
-                    tab_Advanced.lineEdit_RemoteAppBasePort.text + "");
+                    tab_Advanced.spinBox_RemoteAppBasePort.value + "");
             Amarok.Script.writeConfig("showDebug",
                     tab_Advanced.checkBox_ShowDebug.checked + "");
             Amarok.Script.writeConfig("enableBetaFeatures",

@@ -48,7 +48,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="label_Pseudo">
          <property name="text">
-          <string>Pseudo</string>
+          <string>Email</string>
          </property>
          <property name="buddy">
           <cstring>lineEdit_Pseudo</cstring>
@@ -213,7 +213,7 @@
        <item>
         <widget class="QLabel" name="label_RemoteAppBase">
          <property name="text">
-          <string>NowPlaying provider's base url</string>
+          <string>Predatum base url</string>
          </property>
          <property name="buddy">
           <cstring>lineEdit_RemoteAppBase</cstring>
@@ -226,16 +226,20 @@
        <item>
         <widget class="QLabel" name="label_RemoteAppBasePort">
          <property name="text">
-          <string>NowPlaying provider's base port</string>
+          <string>Predatum base port</string>
          </property>
          <property name="buddy">
-          <cstring>lineEdit_RemoteAppBasePort</cstring>
+          <cstring>spinBox_RemoteAppBasePort</cstring>
          </property>
         </widget>
-       </item>	   
-       <item>
-        <widget class="QLineEdit" name="lineEdit_RemoteAppBasePort"/>
        </item>
+       <item row="4" column="1">
+        <widget class="QSpinBox" name="spinBox_RemoteAppBasePort">
+         <property name="maximum">
+          <number>100000</number>
+         </property>
+        </widget>
+       </item>       	   
        <item>
         <widget class="QPushButton" name="pushButton_RestoreDefaults">
          <property name="text">
@@ -305,6 +309,7 @@
   <tabstop>lineEdit_ProxyPassword</tabstop>
   <tabstop>pushButton_ProxyGuess</tabstop>
   <tabstop>lineEdit_RemoteAppBase</tabstop>
+  <tabstop>spinBox_RemoteAppBasePort</tabstop>
   <tabstop>pushButton_RestoreDefaults</tabstop>
   <tabstop>checkBox_EnableBetaFeatures</tabstop>
   <tabstop>checkBox_ShowDebug</tabstop>
