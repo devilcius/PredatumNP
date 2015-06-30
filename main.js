@@ -2,7 +2,7 @@
 var NowPlayingDefaults = {};
 
 // Version
-NowPlayingDefaults.Version = "0.2";
+NowPlayingDefaults.Version = "1.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
 NowPlayingDefaults.RemoteAppBasePort = 443;
