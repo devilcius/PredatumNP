@@ -2,7 +2,7 @@
 var NowPlayingDefaults = {};
 
 // Version
-NowPlayingDefaults.Version = "1.1.1";
+NowPlayingDefaults.Version = "1.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
 NowPlayingDefaults.RemoteAppBasePort = 443;
@@ -336,16 +336,16 @@ function commentPostEventHandler() {
             commentPostDialog.rateThisAlbum.setValue(currentSongDataFromServer.user_release_rating);
             commentPostDialog.rateThisSong.setValue(currentSongDataFromServer.user_track_rating);
             //set review text from server data
-			var albumReviewText = currentSongDataFromServer.user_release_review;
-			if(albumReviewText === null) {
-				albumReviewText = '';
-			}				
-			var songReviewText = currentSongDataFromServer.user_track_review;
-			if(songReviewText === null) {
-				songReviewText = '';
-			}		
-			commentPostDialog.reviewThisAlbum.setPlainText(qsTr(albumReviewText));
-			commentPostDialog.reviewThisSong.setPlainText(qsTr(songReviewText))			
+	    var albumReviewText = currentSongDataFromServer.user_release_review;
+	    if(albumReviewText === null) {
+		    albumReviewText = '';
+	    }				
+	    var songReviewText = currentSongDataFromServer.user_track_review;
+	    if(songReviewText === null) {
+		    songReviewText = '';
+	    }		
+	    commentPostDialog.reviewThisAlbum.setPlainText(qsTr(albumReviewText));
+	    commentPostDialog.reviewThisSong.setPlainText(qsTr(songReviewText))			
         }
         else {
             commentPostDialog.frame_SongInfo.label_SongInfo.setText(
