@@ -2,12 +2,12 @@
 var NowPlayingDefaults = {};
 
 // Version
-NowPlayingDefaults.Version = "1";
+NowPlayingDefaults.Version = "1.1";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
 NowPlayingDefaults.RemoteAppBasePort = 443;
 
-NowPlayingDefaults.ShowDebug = true;
+NowPlayingDefaults.ShowDebug = false;
 // Beta function:
 NowPlayingDefaults.EnableBetaFeatures = false;
 
@@ -86,6 +86,7 @@ var DataPOSTer = {
         http.setHost(url.encodedHost(), QHttp.ConnectionModeHttps, NowPlaying.RemoteAppBasePort);
         http.requestHeader = requestHeader;
         http.data = byteArrayData;
+        
         return http;
     }
 };
@@ -96,7 +97,7 @@ function sendData(data, cookieHeader) {
     try {
 
         var url = new QUrl(NowPlaying.RemoteAppBase + "/api/scrobbler");
-        var HTTPParams = {"User-Agent": "PredatumNP here"};
+        var HTTPParams = {"User-Agent": "PredatumNP " + NowPlaying.Version + " here"};
         HTTPParams['Cookie'] = cookieHeader;
 
         var http = DataPOSTer.simple(url, data, HTTPParams);
@@ -173,13 +174,16 @@ QHttp.prototype.processLoginReply = function () {
 QHttp.prototype.nowPlayingProcessReply = function (error) {
     try {
 
+        // debugMessage(error, "DEPURANDO THIS");
         if (!error) {
-
+            var response = this.lastResponse();
+            var statusCode = response.statusCode();
+            if(statusCode !== 200) {
+                return;
+            }
             var rawReplyData = this.readAll().toString();
 
             debugMessage(rawReplyData, "QHttp.prototype.nowPlayingProcessReply");
-
-            var replyData = parseJSON(rawReplyData);
 
             var replyData = parseJSON(rawReplyData);
 
@@ -207,11 +211,6 @@ QHttp.prototype.nowPlayingProcessReply = function (error) {
                     Amarok.alert(rawReplyData)
                 }
             }
-
-            // if ( this.param == "update" )
-            // timer.start(1000 * 60 * 10); // 10 minutes
-
-
         }
 
     } catch (err) {
@@ -345,8 +344,8 @@ function commentPostEventHandler() {
 			if(songReviewText === null) {
 				songReviewText = '';
 			}		
-			commentPostDialog.reviewThisAlbum.setText(qsTr(albumReviewText));
-			commentPostDialog.reviewThisSong.setText(qsTr(songReviewText))			
+			commentPostDialog.reviewThisAlbum.setPlainText(qsTr(albumReviewText));
+			commentPostDialog.reviewThisSong.setPlainText(qsTr(songReviewText))			
         }
         else {
             commentPostDialog.frame_SongInfo.label_SongInfo.setText(

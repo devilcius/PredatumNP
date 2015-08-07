@@ -99,7 +99,7 @@
     </widget>
    </item>
    <item row="6" column="0" colspan="2">
-    <widget class="QTextEdit" name="reviewThisAlbum">
+    <widget class="QPlainTextEdit" name="reviewThisAlbum">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -138,7 +138,7 @@
     </widget>
    </item>
    <item row="8" column="0" colspan="2">
-    <widget class="QTextEdit" name="reviewThisSong">
+    <widget class="QPlainTextEdit" name="reviewThisSong">
      <property name="tabChangesFocus">
       <bool>true</bool>
      </property>
