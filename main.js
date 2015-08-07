@@ -344,8 +344,8 @@ function commentPostEventHandler() {
 			if(songReviewText === null) {
 				songReviewText = '';
 			}		
-			commentPostDialog.reviewThisAlbum.setText(qsTr(albumReviewText));
-			commentPostDialog.reviewThisSong.setText(qsTr(songReviewText))			
+			commentPostDialog.reviewThisAlbum.setPlainText(qsTr(albumReviewText));
+			commentPostDialog.reviewThisSong.setPlainText(qsTr(songReviewText))			
         }
         else {
             commentPostDialog.frame_SongInfo.label_SongInfo.setText(
