@@ -36,6 +36,10 @@ var cookieHeader = null;
 var loginAttempts = 0;
 var previousStatus = 2;
 var previousSong = "";
+var postedAlbumReview = null;
+var postedSongReview = null;
+var lastAlbumRating = null;
+var lastSongRating = null;
 
 /* POST network requests handling class
 */
@@ -335,6 +339,14 @@ function commentPostEventHandler() {
       //set spin boxes values from server data
       commentPostDialog.rateThisAlbum.setValue(currentSongDataFromServer.user_release_rating);
       commentPostDialog.rateThisSong.setValue(currentSongDataFromServer.user_track_rating);
+      if(lastAlbumRating !== null) {
+        commentPostDialog.rateThisAlbum.setValue(lastAlbumRating);
+        lastAlbumRating = null;
+      }
+      if(lastSongRating !== null) {
+        commentPostDialog.rateThisSong.setValue(lastSongRating);
+        lastSongRating = null;
+      }
       //set review text from server data
       var albumReviewText = currentSongDataFromServer.user_release_review;
       if(albumReviewText === null) {
@@ -346,6 +358,14 @@ function commentPostEventHandler() {
       }
       commentPostDialog.reviewThisAlbum.setPlainText(qsTr(albumReviewText));
       commentPostDialog.reviewThisSong.setPlainText(qsTr(songReviewText))
+      if(postedAlbumReview !== null) {
+        commentPostDialog.reviewThisAlbum.setPlainText(qsTr(postedAlbumReview));
+        postedAlbumReview = null;
+      }
+      if(postedSongReview !== null) {
+        commentPostDialog.reviewThisSong.setPlainText(qsTr(postedSongReview));
+        postedSongReview = null;
+      }
     }
     else {
       commentPostDialog.frame_SongInfo.label_SongInfo.setText(
@@ -382,9 +402,19 @@ function commentPostEventHandler() {
 
         ratingPostData.user_track_id = currentSongDataFromServer.user_track;
         ratingPostData.album_rating = commentPostDialog.rateThisAlbum.value;
-        ratingPostData.album_review = commentPostDialog.reviewThisAlbum.plainText;
+        lastAlbumRating = commentPostDialog.rateThisAlbum.value;
+        var reviewThisAlbumInput = commentPostDialog.reviewThisAlbum.document();
+        var reviewThisSongInput = commentPostDialog.reviewThisSong.document();
+        if(reviewThisAlbumInput.modified) {
+          ratingPostData.album_review = commentPostDialog.reviewThisAlbum.plainText;
+          postedAlbumReview = commentPostDialog.reviewThisAlbum.plainText;
+        }
         ratingPostData.song_rating = commentPostDialog.rateThisSong.value;
-        ratingPostData.song_review = commentPostDialog.reviewThisSong.plainText;
+        lastSongRating = commentPostDialog.rateThisSong.value;
+        if(reviewThisSongInput.modified) {
+          ratingPostData.song_review = commentPostDialog.reviewThisSong.plainText;
+          postedSongReview = commentPostDialog.reviewThisSong.plainText;
+        }
 
         // TODO fetch data from dialog about which handlers to use
         sendData(ratingPostData, cookieHeader);
