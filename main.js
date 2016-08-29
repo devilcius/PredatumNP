@@ -408,12 +408,16 @@ function commentPostEventHandler() {
         if(reviewThisAlbumInput.modified) {
           ratingPostData.album_review = commentPostDialog.reviewThisAlbum.plainText;
           postedAlbumReview = commentPostDialog.reviewThisAlbum.plainText;
+        } else {
+          ratingPostData.album_review = '';
         }
         ratingPostData.song_rating = commentPostDialog.rateThisSong.value;
         lastSongRating = commentPostDialog.rateThisSong.value;
         if(reviewThisSongInput.modified) {
           ratingPostData.song_review = commentPostDialog.reviewThisSong.plainText;
           postedSongReview = commentPostDialog.reviewThisSong.plainText;
+        } else {
+          ratingPostData.song_review = '';
         }
 
         // TODO fetch data from dialog about which handlers to use
