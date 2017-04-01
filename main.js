@@ -177,10 +177,12 @@ QHttp.prototype.processLoginReply = function () {
 */
 QHttp.prototype.nowPlayingProcessReply = function (error) {
   try {
-
+    var response = this.lastResponse();
+    if(response.statusCode() === 401) {// Unauthorized
+      authenticateToPredatum();
+    }
     // debugMessage(error, "DEPURANDO THIS");
     if (!error) {
-      var response = this.lastResponse();
       var statusCode = response.statusCode();
       if(statusCode !== 200) {
         return;
