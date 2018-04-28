@@ -2,7 +2,7 @@
 var NowPlayingDefaults = {};
 
 // Version
-NowPlayingDefaults.Version = "1.1.3";
+NowPlayingDefaults.Version = "1.1.6";
 NowPlayingDefaults.Id = "predatumNP_for_amarok_2";
 NowPlayingDefaults.RemoteAppBase = "https://predatum.com";
 NowPlayingDefaults.RemoteAppBasePort = 443;
@@ -504,8 +504,13 @@ function commentPostEventHandler() {
         Amarok.Script.writeConfig("useNowPlaying",
         tab_General.checkBox_UseNowPlaying.checked + "");
 
+        if(tab_Login.lineEdit_Pseudo.modified || tab_Login.lineEdit_Password.modified) {
+          //delete cookie if password or username modified
+          Amarok.Script.writeConfig("cookie", "");
+        }
         Amarok.Script.writeConfig("userName",
         tab_Login.lineEdit_Pseudo.text + "");
+
         if (tab_Login.lineEdit_Password.modified) {
           var userPassword = tab_Login.lineEdit_Password.text;
           Amarok.Script.writeConfig("userPassword",
